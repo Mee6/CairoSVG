@@ -54,6 +54,8 @@ NOT_INHERITED_ATTRIBUTES = frozenset((
     'x',
     'y',
     '{http://www.w3.org/1999/xlink}href',
+    'dx',
+    'dy',
 ))
 
 COLOR_ATTRIBUTES = frozenset((

@@ -64,6 +64,7 @@ def point_following_path(path, width):
                 y = sin(angle) * length + old_point[1]
                 return x, y
 
+
 def set_context_font_specs(surface, node):
     font_family = (
         (node.get('font-family') or 'sans-serif').split(',')[0].strip('"\' '))
@@ -74,7 +75,26 @@ def set_context_font_specs(surface, node):
         cairo, ('font_weight_{}'.format(node.get('font-weight')).upper()),
         cairo.FONT_WEIGHT_NORMAL)
     surface.context.select_font_face(font_family, font_style, font_weight)
-    surface.context.set_font_size(surface.font_size)
+    font_size = size(surface, node.get('font-size', '12pt'))
+    surface.context.set_font_size(font_size)
+
+
+def compute_text_width(surface, node):
+    surface.context.save()
+    set_context_font_specs(surface, node)
+    extents = surface.context.text_extents(node.text)
+    x_bearing = extents[0]
+    width = extents[2]
+    surface.context.restore()
+
+    dx = size(surface, node.get('dx', '0px'))
+    width += dx
+    width += x_bearing
+
+    for child in node.children:
+        width += compute_text_width(surface, child)
+
+    return width
 
 
 def text(surface, node):
@@ -96,22 +116,11 @@ def text(surface, node):
         surface.context.text_extents(node.text)[:4])
 
     if node.tag == 'text':
-        children_width = 0
-        for c in node.children:
-            if c.tag == 'tspan':
-                surface.context.save()
-                set_context_font_specs(surface, c)
-                children_width += surface.context.text_extents(c.text)[2]
-                surface.context.restore()
-        width += children_width
+        width = compute_text_width(surface, node)
+        surface.text_width = width
 
     if node.tag == 'tspan':
-        surface.context.save()
-        set_context_font_specs(surface, node.parent)
-        parent_width = surface.context.text_extents(node.parent.text)[2]
-        surface.context.restore()
-        width += parent_width
-
+        width = surface.text_width
 
     x, y, dx, dy, rotate = [], [], [], [], [0]
     if 'x' in node:
@@ -137,11 +146,11 @@ def text(surface, node):
 
     text_anchor = node.get('text-anchor')
     if text_anchor == 'middle':
-        x_align = width / 2. + x_bearing
+        x_align = width / 2.
     elif text_anchor == 'end':
-        x_align = width + x_bearing
+        x_align = width
 
-    # TODO: This is a hack. The rest of the baseline alignment tags of the SVG
+        # TODO: This is a hack. The rest of the baseline alignment tags of the SVG
     # 1.1 spec (section 10.9.2) are not supported. We only try to align things
     # that look like Western horizontal fonts.
     # Finally, we add a "display-anchor" attribute for aligning the specific
