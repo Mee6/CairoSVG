@@ -1,3 +1,0 @@
-[submodule "test/cairosvg_reference"]
-	path = test/cairosvg_reference
-	url = ./
