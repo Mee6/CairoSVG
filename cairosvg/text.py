@@ -83,13 +83,11 @@ def compute_text_width(surface, node):
     surface.context.save()
     set_context_font_specs(surface, node)
     extents = surface.context.text_extents(node.text)
-    x_bearing = extents[0]
-    width = extents[2]
+    width = extents[4]  # extents[4] == x_advance. not use width because it does not handle whitespaces properly
     surface.context.restore()
 
     dx = size(surface, node.get('dx', '0px'))
     width += dx
-    width += x_bearing
 
     for child in node.children:
         width += compute_text_width(surface, child)
@@ -118,6 +116,7 @@ def text(surface, node):
     if node.tag == 'text':
         width = compute_text_width(surface, node)
         surface.text_width = width
+        print('width: ', width)
 
     if node.tag == 'tspan':
         width = surface.text_width
