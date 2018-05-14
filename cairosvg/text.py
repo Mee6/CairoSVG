@@ -64,9 +64,7 @@ def point_following_path(path, width):
                 y = sin(angle) * length + old_point[1]
                 return x, y
 
-
-def text(surface, node):
-    """Draw a text ``node``."""
+def set_context_font_specs(surface, node):
     font_family = (
         (node.get('font-family') or 'sans-serif').split(',')[0].strip('"\' '))
     font_style = getattr(
@@ -77,6 +75,11 @@ def text(surface, node):
         cairo.FONT_WEIGHT_NORMAL)
     surface.context.select_font_face(font_family, font_style, font_weight)
     surface.context.set_font_size(surface.font_size)
+
+
+def text(surface, node):
+    """Draw a text ``node``."""
+    set_context_font_specs(surface, node)
     ascent, descent, _, max_x_advance, max_y_advance = (
         surface.context.font_extents())
 
@@ -88,8 +91,27 @@ def text(surface, node):
     else:
         text_path = None
     letter_spacing = size(surface, node.get('letter-spacing'))
+
     x_bearing, y_bearing, width, height = (
         surface.context.text_extents(node.text)[:4])
+
+    if node.tag == 'text':
+        children_width = 0
+        for c in node.children:
+            if c.tag == 'tspan':
+                surface.context.save()
+                set_context_font_specs(surface, c)
+                children_width += surface.context.text_extents(c.text)[2]
+                surface.context.restore()
+        width += children_width
+
+    if node.tag == 'tspan':
+        surface.context.save()
+        set_context_font_specs(surface, node.parent)
+        parent_width = surface.context.text_extents(node.parent.text)[2]
+        surface.context.restore()
+        width += parent_width
+
 
     x, y, dx, dy, rotate = [], [], [], [], [0]
     if 'x' in node:
