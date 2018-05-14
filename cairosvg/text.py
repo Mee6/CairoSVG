@@ -116,7 +116,6 @@ def text(surface, node):
     if node.tag == 'text':
         width = compute_text_width(surface, node)
         surface.text_width = width
-        print('width: ', width)
 
     if node.tag == 'tspan':
         width = surface.text_width
