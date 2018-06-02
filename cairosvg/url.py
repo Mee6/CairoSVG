@@ -27,9 +27,13 @@ from urllib.request import Request, urlopen
 
 from . import __version__
 
+import requests
+
 HTTP_HEADERS = {'User-Agent': 'CairoSVG {}'.format(__version__)}
 
 URL = re.compile(r'url\((.+)\)')
+
+SESSION = requests.Session()
 
 
 def normalize_url(url):
@@ -91,7 +95,7 @@ def fetch(url, resource_type):
     image/*, image/svg+xml, text/css).
 
     """
-    return urlopen(Request(url, headers=HTTP_HEADERS)).read()
+    return SESSION.get(url).content
 
 
 def parse_url(url, base=None):
